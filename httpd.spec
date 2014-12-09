@@ -89,21 +89,9 @@ to install this package.
 
 %prep
 %setup -q
-
-# Safety check: prevent build if defined MMN does not equal upstream MMN.
-vmmn=`echo MODULE_MAGIC_NUMBER_MAJOR | cpp -include include/ap_mmn.h | sed -n '/^2/p'`
-if test "x${vmmn}" != "x%{mmn}"; then
-   : Error: Upstream MMN is now ${vmmn}, packaged MMN is %{mmn}.
-   : Update the mmn macro and rebuild.
-   exit 1
-fi
-
-: Building for '%{distro}' with MMN %{mmn} and vendor string '%{vstring}'
-
 %build
-
-CFLAGS="$RPM_OPT_FLAGS -fno-strict-aliasing"
-SH_LDFLAGS="-Wl,-z,relro"
+CFLAGS=$RPM_OPT_FLAGS -fno-strict-aliasing
+SH_LDFLAGS=-Wl,-z,relro
 export CFLAGS SH_LDFLAGS
 
 # Hard-code path to links to avoid unnecessary builddep
@@ -122,17 +110,27 @@ mkdir $mpm; pushd $mpm
         --enable-static-logresolve \
         --enable-static-ab \
         --enable-static-checkgid \
+        --enable-mime-magic=static \
+        --enable-expires=static \
+        --enable-headers=static \
+        --enable-usertrack=static \
+        --enable-unique-id=static \
+        --enable-deflate=static \
+        --enable-rewrite=static \
+        --enable-mime=static \
+        --enable-log-config=static \
+        --enable-mods-shared=most \
+        --enable-authz-host=static \
         --enable-dir \
         --enable-status \
         --enable-so \
-        --enable-cgi \
         --enable-mods-shared="version env setenvif \
         deflate info rewrite headers cache mem_cache file_cache disk_cache \
         authz-host log-config proxy proxy-connect \
         proxy-http proxy-ftp alias userdir mime asis \
         negotiation actions authn_file authn_default \
         authz_groupfile authz_user authz_default auth_basic \
-        autoindex include filter env setenvi dav dav-fs "\
+        autoindex include filter env setenvi dav dav-fs" \
         $*
  
 make -j 24  %{?_smp_mflags}
@@ -163,7 +161,7 @@ install -m 644 $RPM_SOURCE_DIR/index.html \
 mkdir -p $RPM_BUILD_ROOT/etc/rc.d/init.d
 install -m755 $RPM_SOURCE_DIR/httpd.init \
 	$RPM_BUILD_ROOT/etc/rc.d/init.d/httpd
-%{__perl} -pi -e "s:\@docdir\@:%{_docdir}/%{name}-%{version}:g" \
+%{__perl} -pi -e s:\@docdir\@:%{_docdir}/%{name}-%{version}:g \
 	$RPM_BUILD_ROOT/etc/rc.d/init.d/httpd
 
 # Remove unpackaged files
@@ -174,8 +172,8 @@ rm -f $RPM_BUILD_ROOT%{prefix}/lib/*.exp \
 rm -rf $RPM_BUILD_ROOT%{prefix}/conf/original
 
 %pre
-# Add the "daemon" user
-/usr/sbin/useradd -c "daemon" -u 48 \
+# Add the daemon user
+/usr/sbin/useradd -c daemon -u 48 \
         -s /sbin/nologin -r -d %{contentdir} daemon 2> /dev/null || :
  
 %triggerpostun -- daemon < 2.0
