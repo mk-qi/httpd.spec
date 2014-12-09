@@ -32,7 +32,7 @@ Group: System Environment/Daemons
 
 BuildRoot: %{_tmppath}/%{name}-root
 BuildRequires: perl, pkgconfig, findutils
-BuildRequires: db4-devel, expat-devel, zlib-devel, libselinux-devel
+BuildRequires: zlib-devel
 Requires: /etc/mime.types, gawk, /usr/share/magic.mime, /usr/bin/find
 
 #Requires: initscripts >= 8.36
