@@ -162,7 +162,7 @@ install -m 644 $RPM_SOURCE_DIR/index.html \
 mkdir -p $RPM_BUILD_ROOT/etc/rc.d/init.d
 install -m755 $RPM_SOURCE_DIR/httpd.init \
 	$RPM_BUILD_ROOT/etc/rc.d/init.d/httpd
-%{__perl} -pi -e s:\@docdir\@:%{_docdir}/%{name}-%{version}:g \
+%{__perl} -pi -e "s:\@docdir\@:%{_docdir}/%{name}-%{version}:g" \
 	$RPM_BUILD_ROOT/etc/rc.d/init.d/httpd
 
 # Remove unpackaged files
