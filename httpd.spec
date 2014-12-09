@@ -171,6 +171,8 @@ rm -f $RPM_BUILD_ROOT%{prefix}/lib/*.exp \
       $RPM_BUILD_ROOT%{contentdir}/cgi-bin/*
 
 rm -rf $RPM_BUILD_ROOT%{prefix}/conf/original
+rm -rf $RPM_BUILD_ROOT%{prefix}/{ABOUT_APACHE,README,CHANGES,LICENSE,VERSIONING,NOTICE}
+
 
 %pre
 # Add the daemon user
@@ -216,7 +218,6 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root)
-%doc ABOUT_APACHE README CHANGES LICENSE VERSIONING NOTICE
 
 %{prefix}/bin
 %{prefix}/conf
