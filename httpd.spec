@@ -227,6 +227,7 @@ rm -rf $RPM_BUILD_ROOT
 %{prefix}/icons
 %{prefix}/error
 %{prefix}/htdocs
+%config %{_sysconfdir}/rc.d/init.d/httpd
 
 %files manual
 %defattr(-,root,root)
@@ -234,7 +235,6 @@ rm -rf $RPM_BUILD_ROOT
 %{prefix}/error/README
 %{prefix}/manual/*
 %{prefix}/man/*
-%config %{_sysconfdir}/rc.d/init.d/httpd
 
 
 %files devel
