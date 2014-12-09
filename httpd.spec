@@ -49,7 +49,7 @@ Source0: http://www.apache.org/dist/httpd/httpd-%{version}.tar.bz2
 Source3: httpd.logrotate
 Source4: httpd.init
 Source5: httpd.sysconf
-
+Source6: vhosts
 # Documentation
 Source30: index.html
 
@@ -228,6 +228,7 @@ rm -rf $RPM_BUILD_ROOT
 %{prefix}/error
 %{prefix}/htdocs
 %config %{_sysconfdir}/rc.d/init.d/httpd
+%include %{SOURCE5}
 
 %files manual
 %defattr(-,root,root)
