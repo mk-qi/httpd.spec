@@ -46,10 +46,10 @@ Obsoletes: apache, secureweb, mod_dav, mod_gzip, stronghold-apache, stronghold-h
 Conflicts: pcre < 4.0
 
 Source0: http://www.apache.org/dist/httpd/httpd-%{version}.tar.bz2
+Source1: httpd.conf
 Source3: httpd.logrotate
 Source4: httpd.init
 Source5: httpd.sysconf
-Source6: vhosts
 # Documentation
 Source30: index.html
 
@@ -148,7 +148,11 @@ pushd prefork
 make DESTDIR=$RPM_BUILD_ROOT install
 popd
 
-#rm -rf $RPM_BUILD_ROOT%{prefix}/conf/*.conf
+cp -rf  $RPM_BUILD_ROOT%{prefix}/conf/httpd.conf \
+ 	$RPM_BUILD_ROOT%{prefix}/conf/httpd.conf.orig \
+
+cp -rf  $RPM_SOURCE_DIR/vhosts \
+        $RPM_BUILD_ROOT%{prefix}/conf/
 
 # Make the MMN accessible to module packages
 echo %{mmn} > $RPM_BUILD_ROOT%{prefix}/include/.mmn
@@ -156,6 +160,10 @@ echo %{mmn} > $RPM_BUILD_ROOT%{prefix}/include/.mmn
 # docroot
 install -m 644 $RPM_SOURCE_DIR/index.html \
 	$RPM_BUILD_ROOT%{contentdir}/index.html
+
+install -m 644 $RPM_SOURCE_DIR/httpd.conf \
+        $RPM_BUILD_ROOT%{prefix}/conf/httpd.conf
+
 
 # install SYSV init stuff
 mkdir -p $RPM_BUILD_ROOT/etc/rc.d/init.d
@@ -221,6 +229,7 @@ rm -rf $RPM_BUILD_ROOT
 %{prefix}/bin
 %{prefix}/conf
 %dir %{prefix}/logs
+%{prefix}/conf/vhosts
 %{prefix}/modules
 
 %{prefix}/lib
@@ -228,7 +237,6 @@ rm -rf $RPM_BUILD_ROOT
 %{prefix}/error
 %{prefix}/htdocs
 %config %{_sysconfdir}/rc.d/init.d/httpd
-%include %{SOURCE5}
 
 %files manual
 %defattr(-,root,root)
