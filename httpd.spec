@@ -31,8 +31,8 @@ Group: System Environment/Daemons
 
 
 BuildRoot: %{_tmppath}/%{name}-root
-#BuildRequires: autoconf, perl, pkgconfig, findutils
-#BuildRequires: db4-devel, expat-devel, zlib-devel, libselinux-devel
+BuildRequires: perl, pkgconfig, findutils
+BuildRequires: db4-devel, expat-devel, zlib-devel, libselinux-devel
 Requires: /etc/mime.types, gawk, /usr/share/magic.mime, /usr/bin/find
 
 #Requires: initscripts >= 8.36
@@ -71,6 +71,20 @@ Obsoletes: secureweb-manual, apache-manual
 The httpd-manual package contains the complete manual and
 reference guide for the Apache HTTP server. The information can
 also be found at http://httpd.apache.org/docs/2.2/.
+
+
+%package devel
+Group: Development/Libraries
+Summary: Development tools for the Apache HTTP server.
+Obsoletes: secureweb-devel, apache-devel
+Requires: httpd = %{version}-%{release}
+
+%description devel
+
+If you are installing the Apache HTTP server and you want to be
+able to compile or develop additional modules for Apache, you need
+to install this package.
+
 
 
 %prep
@@ -127,24 +141,16 @@ popd
 
 # Build everything and the kitchen sink with the prefork build
 mpmbuild prefork 
-#mpmbuild worker --enable-modules=none
 
 %install
 
 rm -rf $RPM_BUILD_ROOT
+
 pushd prefork
 make DESTDIR=$RPM_BUILD_ROOT install
 popd
 
 #rm -rf $RPM_BUILD_ROOT%{prefix}/conf/*.conf
-
-# for holding mod_dav lock database
-#mkdir -p $RPM_BUILD_ROOT%{prefix}/lib/dav
-
-
-# create cache root
-mkdir -p $RPM_BUILD_ROOT%{prefix}/cache/mod_proxy
-
 
 # Make the MMN accessible to module packages
 echo %{mmn} > $RPM_BUILD_ROOT%{prefix}/include/.mmn
@@ -159,12 +165,6 @@ install -m755 $RPM_SOURCE_DIR/httpd.init \
 	$RPM_BUILD_ROOT/etc/rc.d/init.d/httpd
 %{__perl} -pi -e "s:\@docdir\@:%{_docdir}/%{name}-%{version}:g" \
 	$RPM_BUILD_ROOT/etc/rc.d/init.d/httpd
-
-# install log rotation stuff
-#mkdir -p $RPM_BUILD_ROOT/etc/logrotate.d
-#install -m644 $RPM_SOURCE_DIR/httpd.logrotate \
-#	$RPM_BUILD_ROOT/etc/logrotate.d/httpd
-
 
 # Remove unpackaged files
 rm -f $RPM_BUILD_ROOT%{prefix}/lib/*.exp \
@@ -190,40 +190,12 @@ rm -rf $RPM_BUILD_ROOT%{prefix}/conf/original
 sed -i /^'export PATH USER'/a\\'export PATH=$PATH:/usr/local/apache2/bin' /etc/profile
 . /etc/profile
 
-#%post -n mod_ssl
-umask 077
- 
-if [ ! -f %{sslkey} ] ; then
-%{_bindir}/openssl genrsa -rand /proc/apm:/proc/cpuinfo:/proc/dma:/proc/filesystems:/proc/interrupts:/proc/ioports:/proc/pci:/proc/rtc:/proc/uptime 1024 > %{sslkey} 2> /dev/null
-fi
- 
-FQDN=`hostname`
-if [ "x${FQDN}" = "x" ]; then
-   FQDN=localhost.localdomain
-fi
- 
-if [ ! -f %{sslcert} ] ; then
-cat << EOF | %{_bindir}/openssl req -new -key %{sslkey} \
-         -x509 -days 365 -set_serial $RANDOM \
-         -out %{sslcert} 2>/dev/null
---
-SomeState
-SomeCity
-SomeOrganization
-SomeOrganizationalUnit
-${FQDN}
-root@${FQDN}
-EOF
-fi
 
 %preun
 if [ $1 = 0 ]; then
 	/sbin/service httpd stop > /dev/null 2>&1
 	/sbin/chkconfig --del httpd
 fi
-
-%define sslcert %{_sysconfdir}/pki/tls/certs/localhost.crt
-%define sslkey %{_sysconfdir}/pki/tls/private/localhost.key
 
 
 #Unexport path for apache
@@ -247,41 +219,33 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 %doc ABOUT_APACHE README CHANGES LICENSE VERSIONING NOTICE
 
-
-%dir %{prefix}/bin
-%dir %{prefix}/cache
-%dir %{prefix}/conf
-%dir %{prefix}/conf/extra
+%{prefix}/bin
+%{prefix}/conf
 %dir %{prefix}/logs
-%dir %{prefix}/modules
+%{prefix}/modules
 
-#%{prefix}/conf
 %{prefix}/lib
-%{prefix}/bin/*
 %{prefix}/icons
 %{prefix}/error
-%{prefix}/error/include
-%{prefix}/build
-%{prefix}/include
 %{prefix}/htdocs
-%{prefix}/cgi-bin
-%{prefix}/modules/mod*.so
-#%exclude %{prefix}/modules/mod_ssl.so
-
-%config(noreplace) %{prefix}/conf/
-
-#%config(noreplace) %{_sysconfdir}/logrotate.d/httpd
-%config %{_sysconfdir}/rc.d/init.d/httpd
-%attr(0700,root,root) %dir %{prefix}/logs/
-#%attr(0700,daemon,daemon) %dir %{prefix}/lib/dav
-%attr(0700,daemon,daemon) %dir %{prefix}/cache/mod_proxy
-
 
 %files manual
 %defattr(-,root,root)
-%config %{prefix}//conf/extra/httpd-manual.conf
+%config %{prefix}/conf/extra/httpd-manual.conf
 %{prefix}/error/README
 %{prefix}/manual/*
 %{prefix}/man/*
+%config %{_sysconfdir}/rc.d/init.d/httpd
+
+
+%files devel
+%defattr(-,root,root)
+%{prefix}/bin/apxs
+%{prefix}/bin/checkgid
+%{prefix}/bin/dbmmanage
+%{prefix}/bin/envvars*
+%{prefix}/build
+%{prefix}/include
+%{prefix}/cgi-bin
 
 %changelog
