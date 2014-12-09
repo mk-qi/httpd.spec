@@ -1,5 +1,4 @@
 # httpd.spec
-# Realase  0.1
 # by mk-qi 
 # Contact  root@mkrss.com
 # only works for apache2 
@@ -11,10 +10,7 @@
 
 %define prefix /usr/local/apache2/
 %define contentdir /usr/local/apache2/htdocs
-%define suexec_caller apache
 %define mmn 20051115
-%define vstring CentOS
-%define distro CentOS
 %define ver 2.2.29
 
 # no debug packages
@@ -46,12 +42,12 @@ Conflicts: pcre < 4.0
 Source0: http://www.apache.org/dist/httpd/httpd-%{version}.tar.bz2
 #patches refer to http://www.apache.org/dist/httpd/patches/
 
-%description
 
+%description
 
 %package manual
 Group: Documentation
-
+Summary: Documentation for the Apache HTTP server.
 %description manual
 
 %package devel
@@ -214,7 +210,6 @@ rm -rf $RPM_BUILD_ROOT
 %{prefix}/error/README
 %{prefix}/manual/*
 %{prefix}/man/*
-
 
 %files devel
 %defattr(-,root,root)
