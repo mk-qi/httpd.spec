@@ -90,8 +90,9 @@ to install this package.
 %prep
 %setup -q
 %build
-CFLAGS=$RPM_OPT_FLAGS -fno-strict-aliasing
-SH_LDFLAGS=-Wl,-z,relro
+
+CFLAGS="$RPM_OPT_FLAGS -fno-strict-aliasing"
+SH_LDFLAGS="-Wl,-z,relro"
 export CFLAGS SH_LDFLAGS
 
 # Hard-code path to links to avoid unnecessary builddep
