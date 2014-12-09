@@ -195,7 +195,6 @@ rm -rf $RPM_BUILD_ROOT
 %{prefix}/bin
 %{prefix}/conf
 %dir %{prefix}/logs
-%{prefix}/conf/vhosts
 %{prefix}/modules
 
 %{prefix}/lib
