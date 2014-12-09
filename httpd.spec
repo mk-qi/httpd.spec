@@ -42,49 +42,24 @@ Requires(pre): sh-utils, textutils, /usr/sbin/useradd
 Provides: webserver
 Provides: httpd-mmn = %{mmn}
 
-Obsoletes: apache, secureweb, mod_dav, mod_gzip, stronghold-apache, stronghold-htdocs
 Conflicts: pcre < 4.0
-
 Source0: http://www.apache.org/dist/httpd/httpd-%{version}.tar.bz2
-Source1: httpd.conf
-Source3: httpd.logrotate
-Source4: httpd.init
-Source5: httpd.sysconf
-# Documentation
-Source30: index.html
-
-#Features/functional changes
 #patches refer to http://www.apache.org/dist/httpd/patches/
 
 %description
-The Apache HTTP Server is a powerful, efficient, and extensible
-web server.
+
 
 %package manual
 Group: Documentation
-Summary: Documentation for the Apache HTTP server.
-Requires: httpd = %{version}-%{release}
-Obsoletes: secureweb-manual, apache-manual
 
 %description manual
-The httpd-manual package contains the complete manual and
-reference guide for the Apache HTTP server. The information can
-also be found at http://httpd.apache.org/docs/2.2/.
-
 
 %package devel
 Group: Development/Libraries
 Summary: Development tools for the Apache HTTP server.
-Obsoletes: secureweb-devel, apache-devel
 Requires: httpd = %{version}-%{release}
 
 %description devel
-
-If you are installing the Apache HTTP server and you want to be
-able to compile or develop additional modules for Apache, you need
-to install this package.
-
-
 
 %prep
 %setup -q
@@ -118,11 +93,11 @@ mkdir $mpm; pushd $mpm
         --enable-deflate=static \
         --enable-rewrite=static \
         --enable-mime=static \
+        --enable-status=static \
         --enable-log-config=static \
         --enable-mods-shared=most \
         --enable-authz-host=static \
         --enable-dir \
-        --enable-status \
         --enable-so \
         --enable-mods-shared="version env setenvif \
         deflate info rewrite headers cache mem_cache file_cache disk_cache \
@@ -141,7 +116,6 @@ popd
 mpmbuild prefork 
 
 %install
-
 rm -rf $RPM_BUILD_ROOT
 
 pushd prefork
@@ -164,13 +138,12 @@ install -m 644 $RPM_SOURCE_DIR/index.html \
 install -m 644 $RPM_SOURCE_DIR/httpd.conf \
         $RPM_BUILD_ROOT%{prefix}/conf/httpd.conf
 
-
 # install SYSV init stuff
 mkdir -p $RPM_BUILD_ROOT/etc/rc.d/init.d
+
 install -m755 $RPM_SOURCE_DIR/httpd.init \
 	$RPM_BUILD_ROOT/etc/rc.d/init.d/httpd
-%{__perl} -pi -e "s:\@docdir\@:%{_docdir}/%{name}-%{version}:g" \
-	$RPM_BUILD_ROOT/etc/rc.d/init.d/httpd
+
 
 # Remove unpackaged files
 rm -f $RPM_BUILD_ROOT%{prefix}/lib/*.exp \
@@ -216,9 +189,6 @@ if readelf -d $RPM_BUILD_ROOT%{prefix}/modules/*.so | grep TEXTREL; then
    : modules contain non-relocatable code
    exit 1
 fi
-
-# Verify that the same modules were built into the httpd binaries
-./prefork/httpd -l | grep -v prefork > prefork.mods
 
 %clean
 rm -rf $RPM_BUILD_ROOT
