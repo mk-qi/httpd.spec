@@ -42,20 +42,8 @@ Conflicts: pcre < 4.0
 Source0: http://www.apache.org/dist/httpd/httpd-%{version}.tar.bz2
 #patches refer to http://www.apache.org/dist/httpd/patches/
 
-
 %description
 
-%package manual
-Group: Documentation
-Summary: Documentation for the Apache HTTP server.
-%description manual
-
-%package devel
-Group: Development/Libraries
-Summary: Development tools for the Apache HTTP server.
-Requires: httpd = %{version}-%{release}
-
-%description devel
 
 %prep
 %setup -q
@@ -91,17 +79,15 @@ mkdir $mpm; pushd $mpm
         --enable-mime=static \
         --enable-status=static \
         --enable-log-config=static \
-        --enable-mods-shared=most \
         --enable-authz-host=static \
-        --enable-dir \
+        --enable-dir=static \
         --enable-so \
         --enable-mods-shared="version env setenvif \
-        deflate info rewrite headers cache mem_cache file_cache disk_cache \
-        authz-host log-config proxy proxy-connect \
-        proxy-http proxy-ftp alias userdir mime asis \
+        info cache mem_cache file_cache disk_cache \
+        proxy proxy-connect proxy-http proxy-ftp alias userdir mime asis \
         negotiation actions authn_file authn_default \
         authz_groupfile authz_user authz_default auth_basic \
-        autoindex include filter env setenvi dav dav-fs" \
+        autoindex include cgi cgid filter env setenvi dav dav-fs" \
         $*
  
 make -j 24  %{?_smp_mflags}
@@ -144,10 +130,13 @@ install -m755 $RPM_SOURCE_DIR/httpd.init \
 # Remove unpackaged files
 rm -f $RPM_BUILD_ROOT%{prefix}/lib/*.exp \
       $RPM_BUILD_ROOT%{prefix}/modules/*.exp \
-      $RPM_BUILD_ROOT%{contentdir}/cgi-bin/*
+      $RPM_BUILD_ROOT%{prefix}/cgi-bin/*
 
 rm -rf $RPM_BUILD_ROOT%{prefix}/conf/original
 rm -rf $RPM_BUILD_ROOT%{prefix}/{ABOUT_APACHE,README,CHANGES,LICENSE,VERSIONING,NOTICE}
+#
+rm -rf $RPM_BUILD_ROOT%{prefix}/{man,manual}
+rm -rf $RPM_BUILD_ROOT%{prefix}/conf/extra/httpd-manual.conf
 
 
 %pre
@@ -156,6 +145,7 @@ rm -rf $RPM_BUILD_ROOT%{prefix}/{ABOUT_APACHE,README,CHANGES,LICENSE,VERSIONING,
         -s /sbin/nologin -r -d %{contentdir} daemon 2> /dev/null || :
  
 %triggerpostun -- daemon < 2.0
+
 /sbin/chkconfig --add httpd
 
 %post
@@ -165,6 +155,7 @@ rm -rf $RPM_BUILD_ROOT%{prefix}/{ABOUT_APACHE,README,CHANGES,LICENSE,VERSIONING,
 
 # Export apache bin path
 sed -i /^'export PATH USER'/a\\'export PATH=$PATH:/usr/local/apache2/bin' /etc/profile
+
 . /etc/profile
 
 
@@ -173,7 +164,6 @@ if [ $1 = 0 ]; then
 	/sbin/service httpd stop > /dev/null 2>&1
 	/sbin/chkconfig --del httpd
 fi
-
 
 #Unexport path for apache
 sed  -i '/\/usr\/local\/apache2\/bin/d' /etc/profile
@@ -202,22 +192,7 @@ rm -rf $RPM_BUILD_ROOT
 %{prefix}/error
 %{prefix}/htdocs
 %config %{_sysconfdir}/rc.d/init.d/httpd
-
-%files manual
-%defattr(-,root,root)
-%config %{prefix}/conf/extra/httpd-manual.conf
-%{prefix}/error/README
-%{prefix}/manual/*
-%{prefix}/man/*
-
-%files devel
-%defattr(-,root,root)
-%{prefix}/bin/apxs
-%{prefix}/bin/checkgid
-%{prefix}/bin/dbmmanage
-%{prefix}/bin/envvars*
 %{prefix}/build
 %{prefix}/include
-%{prefix}/cgi-bin
 
 %changelog
