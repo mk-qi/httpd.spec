@@ -9,7 +9,7 @@
 #--------------------------------
 
 %define prefix /usr/local/apache2/
-%define contentdir /usr/local/apache2/htdocs
+%define contentdir /usr/local/webdata/root/
 %define mmn 20051115
 %define ver 2.2.29
 
@@ -40,7 +40,6 @@ Provides: httpd-mmn = %{mmn}
 
 Conflicts: pcre < 4.0
 Source0: http://www.apache.org/dist/httpd/httpd-%{version}.tar.bz2
-#patches refer to http://www.apache.org/dist/httpd/patches/
 
 %description
 
@@ -82,12 +81,6 @@ mkdir $mpm; pushd $mpm
         --enable-authz-host=static \
         --enable-dir=static \
         --enable-so \
-        --enable-mods-shared="version env setenvif \
-        info cache mem_cache file_cache disk_cache \
-        proxy proxy-connect proxy-http proxy-ftp alias userdir mime asis \
-        negotiation actions authn_file authn_default \
-        authz_groupfile authz_user authz_default auth_basic \
-        autoindex include cgi cgid filter env setenvi dav dav-fs" \
         $*
  
 make -j 24  %{?_smp_mflags}
@@ -95,7 +88,36 @@ popd
 }
 
 # Build everything and the kitchen sink with the prefork build
-mpmbuild prefork 
+mpmbuild prefork --disable-shared \
+         --disable-version \
+         --disable-info \
+         --disable-cache \
+         --disable-mem_cache \
+         --disable-file_cache \
+         --disable-disk_cache \
+         --disable-proxy \
+         --disable-proxyconnect \
+         --disable-proxyhttp \
+         --disable-proxyftp \
+         --disable-alias \
+         --disable-userdir \
+         --disable-mime \
+         --disable-asis \
+         --disable-negotiation \
+         --disable-actions \
+         --disable-authn_file \
+         --disable-authn_default \
+         --disable-authz_groupfile \
+         --disable-authz_user \
+         --disable-authz_default \
+         --disable-auth_basic \
+         --disable-autoindex \
+         --disable-include \
+         --disable-cgi \
+         --disable-cgid \
+         --disable-filter \
+         --disable-dav \
+         --disable-davfs \
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -107,8 +129,13 @@ popd
 cp -rf  $RPM_BUILD_ROOT%{prefix}/conf/httpd.conf \
  	$RPM_BUILD_ROOT%{prefix}/conf/httpd.conf.orig \
 
+if [ -d  $RPM_SOURCE_DIR/vhosts ];then
 cp -rf  $RPM_SOURCE_DIR/vhosts \
         $RPM_BUILD_ROOT%{prefix}/conf/
+fi
+
+mkdir -p $RPM_BUILD_ROOT%{prefix}/conf/vhosts
+mkdir -p $RPM_BUILD_ROOT%{contentdir}
 
 # Make the MMN accessible to module packages
 echo %{mmn} > $RPM_BUILD_ROOT%{prefix}/include/.mmn
@@ -128,9 +155,28 @@ install -m755 $RPM_SOURCE_DIR/httpd.init \
 
 
 # Remove unpackaged files
-rm -f $RPM_BUILD_ROOT%{prefix}/lib/*.exp \
+rm -rf $RPM_BUILD_ROOT%{prefix}/lib/*.exp \
       $RPM_BUILD_ROOT%{prefix}/modules/*.exp \
-      $RPM_BUILD_ROOT%{prefix}/cgi-bin/*
+      $RPM_BUILD_ROOT%{prefix}/cgi-bin/* \
+      $RPM_BUILD_ROOT%{prefix}/bin/apxs \
+      $RPM_BUILD_ROOT%{prefix}/bin/apr-1-config \
+	$RPM_BUILD_ROOT%{prefix}/bin/apu-1-config \
+	$RPM_BUILD_ROOT%{prefix}/bin/checkgid \
+	$RPM_BUILD_ROOT%{prefix}/bin/dbmmanage \
+	$RPM_BUILD_ROOT%{prefix}/bin/envvars \
+	$RPM_BUILD_ROOT%{prefix}/bin/envvars-std \
+	$RPM_BUILD_ROOT%{prefix}/bin/htdbm \
+	$RPM_BUILD_ROOT%{prefix}/bin/htdigest \
+	$RPM_BUILD_ROOT%{prefix}/bin/httxt2dbm \
+	$RPM_BUILD_ROOT%{prefix}/bin/logresolve \
+	$RPM_BUILD_ROOT%{prefix}/bin/rotatelogs \
+	$RPM_BUILD_ROOT%{prefix}/build \
+	$RPM_BUILD_ROOT%{prefix}/include \
+	$RPM_BUILD_ROOT%{prefix}/icons \
+	$RPM_BUILD_ROOT%{prefix}/lib \
+	$RPM_BUILD_ROOT%{prefix}/error \
+
+      
 
 rm -rf $RPM_BUILD_ROOT%{prefix}/conf/original
 rm -rf $RPM_BUILD_ROOT%{prefix}/{ABOUT_APACHE,README,CHANGES,LICENSE,VERSIONING,NOTICE}
@@ -182,17 +228,24 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-,root,root)
 
-%{prefix}/bin
+%{prefix}/bin/htcacheclean
+%{prefix}/bin/httpd
+%{prefix}/bin/apachectl
+%{prefix}/bin/ab
+%{prefix}/bin/htpasswd
+
+
 %{prefix}/conf
 %dir %{prefix}/logs
 %{prefix}/modules
+%{contentdir}/index.html
 
-%{prefix}/lib
-%{prefix}/icons
-%{prefix}/error
+#%{prefix}/lib
+#%{prefix}/icons
+#%{prefix}/error
 %{prefix}/htdocs
 %config %{_sysconfdir}/rc.d/init.d/httpd
-%{prefix}/build
-%{prefix}/include
+#%{prefix}/build
+#%{prefix}/include
 
 %changelog
